@@ -199,7 +199,7 @@ namespace sjtu
 			for (; i < leaf.num; ++i)
 			{
 				if (key == leaf.data[i].first)
-					return pair <iterator, OperationResult>(nullptr,Fail);
+					return pair <iterator, OperationResult>(iterator(),Fail);
 				if (key < leaf.data[i].first)
 					break;
 			}
@@ -217,7 +217,7 @@ namespace sjtu
 				write(&leaf, leaf.offset, 1, sizeof(leafnode));
 			else
 				splitleaf(leaf);
-			return  pair <iterator, OperationResult>(nullptr, Success);
+			return  pair <iterator, OperationResult>(iterator(), Success);
 		}
 
 		void splitnode(internalnode &node)
@@ -356,8 +356,8 @@ namespace sjtu
 			k2 = lb.data[lb.num - 1].first;
 			for (int i = leaf.num - 1; i >= 0; --i)
 			{
-				leaf.data[i + 1].first = leaf, data[i].first;
-				leaf.data[i + 1].second = leaf, data[i].second;
+				leaf.data[i + 1].first = leaf. data[i].first;
+				leaf.data[i + 1].second = leaf.data[i].second;
 			}
 			leaf.data[0].first = lb.data[lb.num - 1].first;
 			leaf.data[0].second = lb.data[lb.num - 1].second;
@@ -710,9 +710,7 @@ namespace sjtu
 				return 0;
 			}
 			iterator() {
-				/*tree = nullptr;
-				offset = 0;
-				index = 0;*/
+
 			};
 			//iterator(iterator &other) {};
 			/*iterator(const iterator& other) {
@@ -733,7 +731,7 @@ namespace sjtu
 			}
 			iterator& operator--() {
 				// Todo --iterator
-				return nullptr;
+				//return nullptr;
 			}
 			// Overloaded of operator '==' and '!='
 			// Check whether the iterators are same
@@ -764,13 +762,12 @@ namespace sjtu
 				// TODO
 
 			}
-			/*const_iterator(const const_iterator& other) {
+			const_iterator(const const_iterator& other) {
 
 			}
 			const_iterator(const iterator& other) {
-				 TODO
-
-			}*/
+				 
+			}
 			// And other methods in iterator, please fill by yourself.
 		};
 		// Default Constructor and Copy Constructor
@@ -832,16 +829,17 @@ namespace sjtu
 		}
 		// Return a iterator to the beginning
 		iterator begin() {
-			return nullptr;
+			//return nullptr;
 		}
 		const_iterator cbegin() const
 		{ 
-			return nullptr;
+			//return nullptr;
 		}
 		// Return a iterator to the end(the next element after the last)
-		iterator end() { return nullptr; }
+		iterator end() { //return nullptr; 
+		}
 		const_iterator cend() const {
-			return nullptr;
+			//return nullptr;
 		}
 		// Check whether this BTree is empty
 		bool empty() const { return info.size == 0; }
@@ -885,10 +883,10 @@ namespace sjtu
 		 * returned.
 		 */
 		iterator find(const Key& key) {
-			return nullptr;
+			//return nullptr;
 		}
 		const_iterator find(Key& key) const {
-			return nullptr;
+			//return nullptr;
 		}
 	};
 }
