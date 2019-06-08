@@ -4,19 +4,21 @@
 #include "exception.hpp"
 #include <map>
 #include <stdio.h>
-namespace sjtu {
+namespace sjtu
+{
 	template <class Key, class Value, class Compare = std::less<Key> >
-	class BTree {
+	class BTree
+	{
 		//private:
 		//    // Your private members go here
 	public:
-		typedef pair<const Key, Value> value_type;
+		typedef pair<Key, Value> value_type;
 
 		static const int M = 1000;                // need modify
 		static const int L = 200;                 // need modify
 		static const int MMIN = M / 2;            // M / 2
 		static const int LMIN = L / 2;            // L / 2
-		static const int info_offset = 0;
+
 		struct basicinfo
 		{
 			int head;          // head of leaf
@@ -30,7 +32,7 @@ namespace sjtu {
 				root = 0;
 				size = 0;
 				eof = 0;
-			}
+			};
 		};
 		class iterator;
 		struct leafnode {
@@ -43,24 +45,26 @@ namespace sjtu {
 				offset = 0, parent = 0, prev = 0, next = 0, num = 0;
 			}
 		};
-		struct internalnode {
+		struct internalnode 
+		{
 			int offset;      	// offset
 			int parent;           	// parent
 			int ch[M + 1];     	// children
 			Key key[M + 1];   	// key
 			int num;              	//child number in internal node
 			bool type;            	// child is leaf or not
-			internalnode() {
+			internalnode() 
+			{
 				offset = 0, parent = 0;
 				for (int i = 0; i <= M; ++i) ch[i] = 0;
 				num = 0;
 				type = 0;
 			}
 		};
-		
+
 		FILE *file;
 		bool ifopen;
-		char filename[10]="btreedata";
+		//char filename[10]="btreedata";
 		bool ifexist;
 		basicinfo info;
 
@@ -81,17 +85,17 @@ namespace sjtu {
 			ifexist = 1;
 			if (ifopen == 0)
 			{
-				file = fopen(filename, "rb+");
+				file = fopen("btreedata", "rb+");
 				if (file == nullptr)
 				{
 					ifexist = 0;
-					file = fopen(filename, "w");
+					file = fopen("btreedata", "w");
 					fclose(file);
-					file = fopen(filename, "rb+");
+					file = fopen("btreedata", "rb+");
 				}
 				else
 				{
-					read(&info, 0, 1, sizeof(info));
+					read(&info, 0, 1, sizeof(basicinfo));
 				}
 				ifopen = 1;
 			}
@@ -107,7 +111,7 @@ namespace sjtu {
 		void build()
 		{
 			info.size = 0;
-			info.root=info.eof = sizeof(basicinfo);
+			info.root = info.eof = sizeof(basicinfo);
 			internalnode root;
 			leafnode leaf;
 			root.offset = info.eof;
@@ -122,11 +126,10 @@ namespace sjtu {
 			write(&root, root.offset, 1, sizeof(internalnode));
 			write(&leaf, leaf.offset, 1, sizeof(leafnode));
 		}
-		
-		int findleaf(key &key, int offset)
+		int findleaf(const Key &key, int offset)
 		{
 			internalnode p;
-			read(p, offset, 1, sizeof(internalnode));
+			read(&p, offset, 1, sizeof(internalnode));
 			if (p.type == 1)
 			{
 				int i = 0;
@@ -151,10 +154,10 @@ namespace sjtu {
 				if (i == 0)
 					return 0;
 				else
-					return findleaf(key,p.ch[i-1]);
+					return findleaf(key, p.ch[i - 1]);
 			}
 		}
-		void insertnode(internalnode &node, Key &key, int ch);
+		//void insertnode(internalnode &node, Key &key, int ch);
 		void splitleaf(leafnode &leaf)
 		{
 			leafnode newleaf;
@@ -165,7 +168,7 @@ namespace sjtu {
 			newleaf.parent = leaf.parent;
 			for (int i = 0; i < newleaf.num; ++i)
 			{
-				newleaf.data[i].first = leaf.data[i + leaf.num].first; 
+				newleaf.data[i].first = leaf.data[i + leaf.num].first;
 				newleaf.data[i].second = leaf.data[i + leaf.num].second;
 			}
 			newleaf.next = leaf.next;
@@ -180,27 +183,29 @@ namespace sjtu {
 				tmp.prev = newleaf.offset;
 				write(&tmp, tmp.offset, 1, sizeof(leafnode));
 			}
-			write(&info, info_offset, 1, sizeof(basicinfo));
+			write(&info, 0, 1, sizeof(basicinfo));
 			write(&leaf, leaf.offset, 1, sizeof(leafnode));
 			write(&newleaf, newleaf.offset, 1, sizeof(leafnode));
 
 			internalnode p;
 			read(&p, leaf.parent, 1, sizeof(internalnode));
-			insertnode(p, leaf.parent, 1, sizeof(leafnode);
+			insertnode(p,newleaf.data[0].first,newleaf.offset);
 		}
-		pair <iterator, OperationResult> insertleaf(leafnode &leaf, Key &key, Value &value)
+
+
+		pair <iterator, OperationResult> insertleaf(leafnode &leaf,const Key &key,const Value &value)
 		{
 			int i = 0;
 			for (; i < leaf.num; ++i)
 			{
 				if (key == leaf.data[i].first)
-					return pair <iterator, OperationResult>(iterator(nullptr), 2);
+					return pair <iterator, OperationResult>(nullptr,Fail);
 				if (key < leaf.data[i].first)
 					break;
 			}
 			for (int j = leaf.num - 1; j >= i; --j)
 			{
-				leaf.data[j + 1].first = leaf[j].first;
+				leaf.data[j + 1].first = leaf.data[j].first;
 				leaf.data[j + 1].second = leaf.data[j].second;
 			}
 			leaf.data[i].first = key;
@@ -212,7 +217,7 @@ namespace sjtu {
 				write(&leaf, leaf.offset, 1, sizeof(leafnode));
 			else
 				splitleaf(leaf);
-			return  pair <iterator, OperationResult>(iterator(nullptr), 0);
+			return  pair <iterator, OperationResult>(nullptr, Success);
 		}
 
 		void splitnode(internalnode &node)
@@ -220,17 +225,17 @@ namespace sjtu {
 			internalnode newnode;
 			newnode.num = node.num - node.num / 2;
 			node.num /= 2;
-			newnode.parent = node = parent;
+			newnode.parent = node. parent;
 			newnode.type = node.type;
 			newnode.offset = info.eof;
 			info.eof += sizeof(internalnode);
-			for (int i = 0; i < newnode.cnt; ++i)
+			for (int i = 0; i < newnode.num; ++i)
 				newnode.key[i] = node.key[i + node.num];
-			for (int i = 0; i < newnode.cnt; ++i)
+			for (int i = 0; i < newnode.num; ++i)
 				newnode.ch[i] = node.ch[i + node.num];
 			leafnode tleaf;
 			internalnode tnode;
-			if (new.type == 1)
+			if (newnode.type == 1)
 			{
 				for (int i = 0; i < newnode.num; ++i)
 				{
@@ -250,7 +255,7 @@ namespace sjtu {
 			}
 			if (info.root != node.offset)
 			{
-				write(&info, 0, 1, sizeof(basicInfo));
+				write(&info, 0, 1, sizeof(basicinfo));
 				write(&node, node.offset, 1, sizeof(internalnode));
 				write(&newnode, newnode.offset, 1, sizeof(internalnode));
 
@@ -272,7 +277,7 @@ namespace sjtu {
 				newrt.ch[1] = newnode.offset;
 				node.parent = newrt.offset;
 				newnode.parent = newrt.offset;
-				info.rt = newrt.offset;
+				info.root = newrt.offset;
 				write(&info, 0, 1, sizeof(basicinfo));
 				write(&node, node.offset, 1, sizeof(internalnode));
 				write(&newnode, newnode.offset, 1, sizeof(internalnode));
@@ -284,7 +289,7 @@ namespace sjtu {
 			int i = 0;
 			for (; i < node.num; ++i)
 			{
-				if (key < node.key[i])breaj;
+				if (key < node.key[i])break;
 			}
 			for (int j = node.num - 1; j >= i; --j)
 			{
@@ -327,7 +332,7 @@ namespace sjtu {
 			internalnode p;
 			read(&p, leaf.parent, 1, sizeof(internalnode));
 			for (int i = 0; i < p.num; ++i) {
-				if (p.key[i] == k1) 
+				if (p.key[i] == k1)
 				{
 					p.key[i] = k2;
 					break;
@@ -348,7 +353,7 @@ namespace sjtu {
 				return 0;
 			Key k1, k2;
 			k1 = leaf.data[0].first;
-			k2 = lb.data[lb.num-1].first;
+			k2 = lb.data[lb.num - 1].first;
 			for (int i = leaf.num - 1; i >= 0; --i)
 			{
 				leaf.data[i + 1].first = leaf, data[i].first;
@@ -373,12 +378,13 @@ namespace sjtu {
 			write(&lb, lb.offset, 1, sizeof(leafnode));
 			return 1;
 		}
-		bool checknode(internalnode node) 
+		bool checknode(internalnode node)
 		{
 			if (node.parent == 0) return 1;
 			if (node.num >= MMIN) return 1;
 			return 0;
 		}
+		//void operatenode(internalnode node);
 		bool borrowrnode(internalnode node)
 		{
 			if (node.parent == 0)return 0;
@@ -391,7 +397,7 @@ namespace sjtu {
 			}
 			if (i >= p.num - 1)return 0;
 			internalnode rb;
-			read (&rb, p.ch[i + 1], 1, sizeof(internalnode));
+			read(&rb, p.ch[i + 1], 1, sizeof(internalnode));
 			if (rb.num <= MMIN) return 0;
 
 			node.key[node.num] = rb.key[0];
@@ -433,7 +439,7 @@ namespace sjtu {
 			{
 				if (p.ch[i] == node.offset)break;
 			}
-			if (i ==0)return 0;
+			if (i == 0)return 0;
 			internalnode lb;
 			read(&lb, p.ch[i - 1], 1, sizeof(internalnode));
 			if (lb.num <= MMIN) return 0;
@@ -442,8 +448,8 @@ namespace sjtu {
 				node.key[j + 1] = node.key[j];
 				node.ch[j + 1] = node.ch[j];
 			}
-			node.key[0] = lb.key[lb.num-1];
-			node.ch[0] = lb.ch[lb.num-1];
+			node.key[0] = lb.key[lb.num - 1];
+			node.ch[0] = lb.ch[lb.num - 1];
 			++node.num;
 			--lb.num;
 
@@ -483,9 +489,86 @@ namespace sjtu {
 			for (int j = 0; j < rb.num; ++j)
 			{
 				node.key[node.num] = rb.key[j];
+				node.ch[node.num] = rb.ch[j];
+				if (node.type == 1) {
+					leafnode son;
+					read(&son, node.ch[node.num], 1, sizeof(leafnode));
+					son.parent = node.offset;
+					write(&son, son.offset, 1, sizeof(leafnode));
+				}
+				else
+				{
+					internalnode son;
+					read(&son, node.ch[node.num], 1, sizeof(internalnode));
+					son.parent = node.offset;
+					write(&son, son.offset, 1, sizeof(internalnode));
+				}
+				++node.num;
 			}
+			for (int j = i + 1; j < p.num - 1; ++j)
+			{
+				p.key[j] = p.key[j + 1];
+				p.ch[j] = p.ch[j + 1];
+			}
+			--p.num;
+			write(&node, node.offset, 1, sizeof(internalnode));
+			if (checknode(p) == 1)
+			{
+				write(&p, p.offset, 1, sizeof(internalnode));
+			}
+			else
+				operatornode(p);
+			return 1;
 		}
-		void operatenode(internalnode node) 
+		bool mergelnode(internalnode node)
+		{
+			if (node.parent == 0)return 0;
+			internalnode p;
+			read(&p, node.parent, 1, sizeof(internalnode));
+			int i = 0;
+			for (; i < p.num; ++i)
+			{
+				if (p.ch[i] == node.offset)break;
+			}
+			if (i == 0)return 0;
+			internalnode lb;
+			read(&lb, p.ch[i - 1], 1, sizeof(internalnode));
+			for (int j = 0; j < node.num; ++j)
+			{
+				lb.key[lb.num] = node.key[j];
+				lb.ch[lb.num] = node.ch[j];
+				if (lb.type == 1)
+				{
+					leafnode son;
+					read(&son, lb.ch[lb.num], 1, sizeof(leafnode));
+					son.parent = lb.offset;
+					write(&son, son.offset, 1, sizeof(leafnode));
+				}
+				else
+				{
+					internalnode son;
+					read(&son, lb.ch[lb.num], 1, sizeof(internalnode));
+					son.parent = lb.offset;
+					write(&son, son.offset, 1, sizeof(internalnode));
+				}
+				++lb.num;
+			}
+			for (int j = i; j < p.num - 1; ++j)
+			{
+				p.key[j] = p.key[j + 1];
+				p.ch[j] = p.ch[j + 1];
+			}
+			--p.num;
+			write(&lb, lb.offset, 1, sizeof(internalnode));
+			if (checknode(p) == 1)
+			{
+				write(&p, p.offset, 1, sizeof(internalnode));
+			}
+			else
+				operatornode(p);
+			return 1;
+		}
+		void operatenode(internalnode node)
 		{
 			if (borrowrnode(node) == 1) return;
 			if (borrowlnode(node) == 1) return;
@@ -607,7 +690,7 @@ namespace sjtu {
 			else operatenode(p);
 			return 1;
 		}
-		void operateleaf(leafnode leaf) 
+		void operateleaf(leafnode leaf)
 		{
 			if (borrowrleaf(leaf) == 1) return;
 			if (borrowlleaf(leaf) == 1) return;
@@ -624,44 +707,51 @@ namespace sjtu {
 			int offset;
 			int index;
 			bool modify(const Value& value) {
-
+				return 0;
 			}
 			iterator() {
 				tree = nullptr;
 				offset = 0;
 				index = 0;
 			}
-			iterator(const iterator& other) {
-				tree = other.tree;
-				offset = other.offset;
-				index = other.index;
-			}
+			//iterator(iterator &other) {};
+			/*iterator(const iterator& other) {
+				
+			}*/
 			// Return a new iterator which points to the n-next elements
 			iterator operator++(int) {
 				// Todo iterator++
+				return nullptr;
 			}
 			iterator& operator++() {
 				// Todo ++iterator
+				return nullptr;
 			}
 			iterator operator--(int) {
 				// Todo iterator--
+				return nullptr;
 			}
 			iterator& operator--() {
 				// Todo --iterator
+				return nullptr;
 			}
 			// Overloaded of operator '==' and '!='
 			// Check whether the iterators are same
 			bool operator==(const iterator& rhs) const {
 				// Todo operator ==
+				return 0;
 			}
 			bool operator==(const const_iterator& rhs) const {
 				// Todo operator ==
+				return 0;
 			}
 			bool operator!=(const iterator& rhs) const {
 				// Todo operator !=
+				return 0;
 			}
 			bool operator!=(const const_iterator& rhs) const {
 				// Todo operator !=
+				return 0;
 			}
 		};
 		class const_iterator {
@@ -672,62 +762,121 @@ namespace sjtu {
 		public:
 			const_iterator() {
 				// TODO
+
 			}
-			const_iterator(const const_iterator& other) {
-				// TODO
+			/*const_iterator(const const_iterator& other) {
+
 			}
 			const_iterator(const iterator& other) {
-				// TODO
-			}
+				 TODO
+
+			}*/
 			// And other methods in iterator, please fill by yourself.
 		};
 		// Default Constructor and Copy Constructor
 		BTree() {
 			// Todo Default
+			file= nullptr;
+			openfile();
+			if (ifexist == 1)
+			{
+				build();
+			}
 		}
 		BTree(const BTree& other) {
-			// Todo Copy
+			openfile();
+			read(&info, 0, 1, sizeof(basicinfo));
 		}
 		BTree& operator=(const BTree& other) {
-			// Todo Assignment
+			openfile();
+			read(&info, 0, 1, sizeof(basicinfo));
 		}
 		~BTree() {
-			// Todo Destructor
+			closefile();
 		}
 		// Insert: Insert certain Key-Value into the database
 		// Return a pair, the first of the pair is the iterator point to the new
 		// element, the second of the pair is Success if it is successfully inserted
+
 		pair<iterator, OperationResult> insert(const Key& key, const Value& value) {
+			int index = findleaf(key, info.root);
+			leafnode leaf;
+			if (info.size == 0 || index == 0)
+			{
+				read(&leaf, info.head, 1, sizeof(leafnode));
+				pair <iterator, OperationResult> ret = insertleaf(leaf,key, value);
+				if (ret.second == Fail)return ret;
+				int x = leaf.parent;
+				internalnode node;
+				while (x != 0)
+				{
+					read(&node, x, 1, sizeof(internalnode));
+					node.key[0] = key;
+					write(&node, x, 1, sizeof(internalnode));
+					x = node.parent;
+				}
+				return ret;
+			}
+			read(&leaf, info.head, 1, sizeof(leafnode));
+			pair <iterator, OperationResult> ret = insertleaf(leaf,key, value);
+			return ret;
 
 		}
 		// Erase: Erase the Key-Value
 		// Return Success if it is successfully erased
 		// Return Fail if the key doesn't exist in the database
-		OperationResult erase(const Key& key) {
+		OperationResult erase(const Key& key)
+		{
 			// TODO erase function
 			return Fail;  // If you can't finish erase part, just remaining here.
 		}
 		// Return a iterator to the beginning
-		iterator begin() {}
-		const_iterator cbegin() const {}
+		iterator begin() {
+			return iterator(nullptr);
+		}
+		const_iterator cbegin() const
+		{ 
+			return const_iterator(nullptr);
+		}
 		// Return a iterator to the end(the next element after the last)
-		iterator end() {}
-		const_iterator cend() const {}
+		iterator end() { return iterator(nullptr); }
+		const_iterator cend() const {
+			return const_iterator(nullptr);
+		}
 		// Check whether this BTree is empty
-		bool empty() const {}
+		bool empty() const { return info.size == 0; }
 		// Return the number of <K,V> pairs
-		size_t size() const {}
+		size_t size() const { return (size_t)info.size; }
 		// Clear the BTree
-		void clear() {}
+		void clear() 
+		{
+			file = fopen("btreedata", "w");
+			fclose(file);
+			openfile();
+			build();
+		}
 		// Return the value refer to the Key(key)
 		Value at(const Key& key) {
+			int index = findleaf(key, info.root);
+			leafnode leaf;
+			read(&leaf, index, 1, sizeof(leafnode));
+			for (int i = 0; i < leaf.num; ++i)
+			{
+				if (leaf.data[i].first == key)
+				{
+					return  leaf.data[i].second;
+				}
+			}
+			return 0;
 		}
 		/**
 		 * Returns the number of elements with key
 		 *   that compares equivalent to the specified argument,
 		 * The default method of check the equivalence is !(a < b || b > a)
 		 */
-		size_t count(const Key& key) const {}
+		size_t count(const Key& key) const {
+			return 0;
+		}
 		/**
 		 * Finds an element with key equivalent to key.
 		 * key value of the element to search for.
@@ -735,8 +884,12 @@ namespace sjtu {
 		 *   If no such element is found, past-the-end (see end()) iterator is
 		 * returned.
 		 */
-		iterator find(const Key& key) {}
-		const_iterator find(const Key& key) const {}
+		iterator find(const Key& key) {
+			return iterator(nullptr);
+		}
+		const_iterator find(Key& key) const {
+			return nullptr;
+		}
 	};
-}  // namespace sjtu
-
+}
+// namespace sjtu
