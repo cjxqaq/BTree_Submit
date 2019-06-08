@@ -703,17 +703,17 @@ namespace sjtu
 			//private:
 			//    // Your private members go here
 		public:
-			BTree* tree;
+			/*BTree* tree;
 			int offset;
-			int index;
+			int index;*/
 			bool modify(const Value& value) {
 				return 0;
 			}
 			iterator() {
-				tree = nullptr;
+				/*tree = nullptr;
 				offset = 0;
-				index = 0;
-			}
+				index = 0;*/
+			};
 			//iterator(iterator &other) {};
 			/*iterator(const iterator& other) {
 				
@@ -721,15 +721,15 @@ namespace sjtu
 			// Return a new iterator which points to the n-next elements
 			iterator operator++(int) {
 				// Todo iterator++
-				return nullptr;
+				/*return nullptr;*/
 			}
 			iterator& operator++() {
 				// Todo ++iterator
-				return nullptr;
+				/*return nullptr;*/
 			}
 			iterator operator--(int) {
 				// Todo iterator--
-				return nullptr;
+				/*return nullptr;*/
 			}
 			iterator& operator--() {
 				// Todo --iterator
@@ -832,16 +832,16 @@ namespace sjtu
 		}
 		// Return a iterator to the beginning
 		iterator begin() {
-			return iterator(nullptr);
+			return nullptr;
 		}
 		const_iterator cbegin() const
 		{ 
-			return const_iterator(nullptr);
+			return nullptr;
 		}
 		// Return a iterator to the end(the next element after the last)
-		iterator end() { return iterator(nullptr); }
+		iterator end() { return nullptr; }
 		const_iterator cend() const {
-			return const_iterator(nullptr);
+			return nullptr;
 		}
 		// Check whether this BTree is empty
 		bool empty() const { return info.size == 0; }
@@ -885,7 +885,7 @@ namespace sjtu
 		 * returned.
 		 */
 		iterator find(const Key& key) {
-			return iterator(nullptr);
+			return nullptr;
 		}
 		const_iterator find(Key& key) const {
 			return nullptr;
